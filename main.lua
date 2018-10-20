@@ -1,5 +1,6 @@
 playerImg = nil -- for storage
 player = { x = 200, y = 710, speed = 150, img = nil}
+screenWidth = love.graphics.getWidth()
 
 function love.load(arg)
     player.img = love.graphics.newImage('aircrafts/Aircraft_03.png')
@@ -10,9 +11,13 @@ function love.update(dt)
         love.event.push("quit")
     end
     if love.keyboard.isDown('left', 'a') then
-        player.x = player.x - (player.speed*dt)
+        if player.x > 0 then
+            player.x = player.x - (player.speed*dt)
+        end
     elseif love.keyboard.isDown('right', 'd') then 
-        player.x = player.x + (player.speed*dt)
+        if player.x < (screenWidth - player.img:getWidth()) then
+            player.x = player.x + (player.speed*dt)
+        end
     end
     if love.keyboard.isDown('up', 'w') then
         player.y = player.y - (player.speed*dt)
