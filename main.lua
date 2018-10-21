@@ -22,8 +22,14 @@ function love.load(arg)
 end
 
 function love.update(dt)
+    inWater = playerInWater(player, sea)
     -- player.velocity = 0
     player.velocity = player.gravity
+    player.move_speed = -200
+    if inWater then
+        player.velocity = 0
+        player.move_speed = -100
+    end
     playerWidth = player.img:getWidth()
     playerHeight = player.img:getHeight()
     if love.keyboard.isDown("escape") then
@@ -42,10 +48,9 @@ function love.update(dt)
     end
     if love.keyboard.isDown('up', 'w') then
         player.velocity = player.move_speed
+    elseif love.keyboard.isDown('down', 's') and inWater then 
+        player.velocity = -1 * player.move_speed
     end
-    -- elseif love.keyboard.isDown('down', 's') then 
-    --     player.y = player.y + (player.speed*dt)
-    -- end
     
     if player.velocity ~= 0 then 
         player.y = player.y + player.velocity * dt
@@ -56,6 +61,8 @@ function love.update(dt)
         -- player.velocity = 0
         player.y = screenHeight - playerHeight
     end
+
+    print(player.velocity)
 
     -- canShootTimer = canShootTimer - (1 * dt)
     -- if canShootTimer < 0 then
@@ -88,4 +95,22 @@ function love.draw(dt)
     for i, bullet in ipairs(bullets) do
         love.graphics.draw(bullet.img, bullet.x, bullet.y)
     end
+end
+
+
+function playerInWater(player, water)
+    if (player.x < water.x) then
+        return false
+    end
+    if (player.x + player.img:getWidth() > water.x + water.w) then
+        return false
+    end
+    if (player.y < water.y) then
+        return false
+    end
+    if (player.y + player.img:getHeight() > water.y + water.h) then
+        return false
+    end
+
+    return true
 end
