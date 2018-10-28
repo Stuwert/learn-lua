@@ -1,12 +1,28 @@
 screenWidth = nil
 screenHeight = nil
 playerImg = nil -- for storage
-player = { x = 200, y = 510, speed = 100, img = nil, tankMax = 10, refilRate = 1, yEnd = nil, xEnd = nil}
+player = { x = 200, y = 510, speed = 100, img = nil, tankMax = 10, refilRate = 1, yEnd = nil, xEnd = nil, playerAccel = 3, maxVelocity = 3}
 player.tank = player.tankMax
+
+function player:getXEnd()
+    if self.img then
+        return self.x + self.img:getWidth()
+    end
+    return nil
+end
+
+function player:getYEnd()
+    if self.img then
+        return self.y + self.img:getHeight()
+    end
+    return nil
+end
 
 canShoot = true
 canShootTimerMax = 0.2
 canShootTimer = canShootTimerMax
+
+gravityAccel = 9.8
 
 bulletImg = nil
 
@@ -34,10 +50,25 @@ function setWaterMoveSpeed()
 end
 
 function love.update(dt)
-    player.xEnd = player.img:getWidth() + player.x
-    player.yEnd = player.img:getHeight() + player.y
-    print(player.tank)
-    inWater = playerInWater(player, sea)
+    -- describe the loop
+
+    -- set new player x/y values
+    -- set player in water
+    -- refill tank/set water move speed
+
+    -- check player inputs
+        -- if movement input, cancel gravity 
+        -- apply accel
+    -- calculate velocity
+        -- apply velo max
+    -- calculate position
+        -- apply position maxes
+    -- calculate screen location 
+    -- apply new position
+    -- animate ?
+
+
+    player.inWater = playerInWater(player, sea)
     -- player.velocity = 0
     player.velocity = player.gravity
     player.move_speed = -200
@@ -125,6 +156,14 @@ function isIntersecting(obj1Start, obj1End, obj2Start, obj2End)
 end
 
 function playerInWater(player, water)
-    return isIntersecting(player.x, player.xEnd, water.x, water.xEnd) and
-        isIntersecting(player.y, player.yEnd, water.y, water.yEnd)
+    return isIntersecting(player.x, player:getXEnd(), water.x, water.xEnd) and
+        isIntersecting(player.y, player:getYEnd(), water.y, water.yEnd)
+end
+
+
+function calculateAcceleration(currentVelocity, acceleration, dt)
+    return currentVelocity + acceleration * dt
+end
+
+function calculateVeloctiy(currentVelocity, acceleration, dt)
 end
