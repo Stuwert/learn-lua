@@ -1,7 +1,7 @@
 screenWidth = nil
 screenHeight = nil
 playerImg = nil -- for storage
-player = { x = 200, y = 510, speed = 150, img = nil, tankMax = 5, refilRate = 1}
+player = { x = 200, y = 510, speed = 100, img = nil, tankMax = 10, refilRate = 1, yEnd = nil, xEnd = nil}
 player.tank = player.tankMax
 
 canShoot = true
@@ -21,23 +21,29 @@ function love.load(arg)
     bulletImg = love.graphics.newImage('aircrafts/bullet_2_blue.png')
     player.velocity = 0
     player.gravity = 400
-    player.move_speed = -200
-    sea = { h = 200, w = screenWidth, y = screenHeight - 200, x = 0, img = nil}
+    sea = { yEnd = screenHeight, xEnd = screenWidth, y = screenHeight - 200, x = 0, img = nil}
+end
+
+function refillTank()
+    player.tank = player.tankMax
+end
+
+function setWaterMoveSpeed()
+    player.velocity = 0
+    player.move_speed = -100
 end
 
 function love.update(dt)
+    player.xEnd = player.img:getWidth() + player.x
+    player.yEnd = player.img:getHeight() + player.y
     print(player.tank)
     inWater = playerInWater(player, sea)
     -- player.velocity = 0
     player.velocity = player.gravity
     player.move_speed = -200
     if inWater then
-        player.tank = player.tank + dt * 2
-        if player.tank >= player.tankMax then
-            player.tank = player.tankMax
-        end
-        player.velocity = 0
-        player.move_speed = -100
+        refillTank()
+        setWaterMoveSpeed()
     end
     playerWidth = player.img:getWidth()
     playerHeight = player.img:getHeight()
@@ -62,7 +68,7 @@ function love.update(dt)
         end
     end
     if love.keyboard.isDown('up', 'w') and player.tank > 0 then
-        player.velocity = player.move_speed
+        player.velocity = -1 * player.speed
         if inWater == false then
             player.tank = player.tank - dt * 2
         end
@@ -105,7 +111,7 @@ function love.update(dt)
 
 function love.draw(dt)
     love.graphics.setColor(16/255, 110/255, 232/255, 1)
-    love.graphics.rectangle("fill", sea.x, sea.y, sea.w, sea.h)
+    love.graphics.rectangle("fill", sea.x, sea.y, sea.xEnd - sea.x, sea.yEnd - sea.y)
     love.graphics.setColor(255, 255, 255, 1)
     love.graphics.draw(player.img, player.x, player.y)
     for i, bullet in ipairs(bullets) do
@@ -113,20 +119,12 @@ function love.draw(dt)
     end
 end
 
+function isIntersecting(obj1Start, obj1End, obj2Start, obj2End)
+    return (obj1Start > obj2Start and obj1Start < obj2End) or 
+        (obj1End > obj2Start and obj1End < obj2End)
+end
 
 function playerInWater(player, water)
-    if (player.x < water.x) then
-        return false
-    end
-    if (player.x + player.img:getWidth() > water.x + water.w) then
-        return false
-    end
-    if (player.y < water.y) then
-        return false
-    end
-    if (player.y + player.img:getHeight() > water.y + water.h) then
-        return false
-    end
-
-    return true
+    return isIntersecting(player.x, player.xEnd, water.x, water.xEnd) and
+        isIntersecting(player.y, player.yEnd, water.y, water.yEnd)
 end

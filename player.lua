@@ -12,7 +12,7 @@ player = {
     isGrounded = false,
     hasReachedMax = false,
     jumpAcc = 500,
-    jumpMaxSpeed = 9.5
+    jumpMaxSpeed = 9.5,
 
     img = nil
 }
