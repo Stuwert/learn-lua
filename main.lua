@@ -1,22 +1,8 @@
 screenWidth = nil
 screenHeight = nil
 playerImg = nil -- for storage
-player = { x = 200, y = 510, speed = 100, img = nil, tankMax = 10, refilRate = 1, yEnd = nil, xEnd = nil, playerAccel = 3, maxVelocity = 3}
-player.tank = player.tankMax
-
-function player:getXEnd()
-    if self.img then
-        return self.x + self.img:getWidth()
-    end
-    return nil
-end
-
-function player:getYEnd()
-    if self.img then
-        return self.y + self.img:getHeight()
-    end
-    return nil
-end
+player = require "player"
+waterjet = require "waterjet"
 
 canShoot = true
 canShootTimerMax = 0.2
@@ -28,13 +14,24 @@ bulletImg = nil
 
 bullets = {}
 sea = {}
+jets = { content = {} }
+
+function jets:moveSpray(dt)
+    for i, jet in ipairs(self.content) do
+        jet:move(dt)
+        if jet:isNotOnScreen() == true then
+            table.remove(self.content, i)
+        end
+    end
+end
+
 
 function love.load(arg)
     love.window.setMode(800, 800)
     screenWidth = love.graphics.getWidth()
     screenHeight = love.graphics.getHeight()
     player.img = love.graphics.newImage('aircrafts/Aircraft_03.png')
-    bulletImg = love.graphics.newImage('aircrafts/bullet_2_blue.png')
+    waterjet.img = love.graphics.newImage('aircrafts/bullet_2_blue.png')
     player.velocity = 0
     player.gravity = 400
     sea = { yEnd = screenHeight, xEnd = screenWidth, y = screenHeight - 200, x = 0, img = nil}
@@ -52,7 +49,6 @@ end
 function love.update(dt)
     -- describe the loop
 
-    -- set new player x/y values
     -- set player in water
     -- refill tank/set water move speed
 
@@ -67,43 +63,57 @@ function love.update(dt)
     -- apply new position
     -- animate ?
 
-
-    player.inWater = playerInWater(player, sea)
     -- player.velocity = 0
+    jets:moveSpray(dt)
+
     player.velocity = player.gravity
     player.move_speed = -200
-    if inWater then
+
+    if player:collidedWith(sea) then
         refillTank()
         setWaterMoveSpeed()
     end
-    playerWidth = player.img:getWidth()
-    playerHeight = player.img:getHeight()
+
     if love.keyboard.isDown("escape") then
         love.event.push("quit")
     end
+
     if love.keyboard.isDown('left', 'a') and player.tank > 0 then
         if player.x > 0 then
             player.x = player.x - (player.speed*dt)
-            if inWater == false then
+            if player:collidedWith(sea) == false then
                 player.tank = player.tank - dt * 2
+                if player:canShoot(dt) then
+                    newWaterJet = waterjet:new(player:getPlayerCenter(), 'right')
+                    table.insert(jets.content, newWaterJet)
+                end
             end
             player.velocity = 0
         end
     elseif love.keyboard.isDown('right', 'd') and player.tank > 0 then 
-        if player.x < (screenWidth - playerWidth) then
+        if player.x < (screenWidth - player:getWidth()) then
             player.x = player.x + (player.speed*dt)
-            if inWater == false then
+            if player:collidedWith(sea) == false then
                 player.tank = player.tank - dt * 2
+                if player:canShoot(dt) then
+                    newWaterJet = waterjet:new(player:getPlayerCenter(), 'left')
+                    table.insert(jets.content, newWaterJet)
+                end
             end
             player.velocity = 0
         end
     end
+
     if love.keyboard.isDown('up', 'w') and player.tank > 0 then
         player.velocity = -1 * player.speed
-        if inWater == false then
+        if player:collidedWith(sea) == false then
             player.tank = player.tank - dt * 2
+            if player:canShoot(dt) then
+                newWaterJet = waterjet:new(player:getPlayerCenter(), 'down')
+                table.insert(jets.content, newWaterJet)
+            end
         end
-    elseif love.keyboard.isDown('down', 's') and inWater then 
+    elseif love.keyboard.isDown('down', 's') and player:collidedWith(sea) then 
         player.velocity = -1 * player.move_speed
     end
     
@@ -112,28 +122,15 @@ function love.update(dt)
         -- player.velocity = player.velocity - player.gravity * dt 
     end
 
-    if (player.y + playerHeight) >= screenHeight then 
+    if (player.y + player:getHeight()) >= screenHeight then 
         -- player.velocity = 0
-        player.y = screenHeight - playerHeight
+        player.y = screenHeight - player:getHeight()
     end
 
-    -- canShootTimer = canShootTimer - (1 * dt)
-    -- if canShootTimer < 0 then
-    -- canShoot = true
-    -- end
-    -- if love.keyboard.isDown('space', 'rctrl', 'lctrl') and canShoot then
-    --     newBullet = { x = player.x + (playerWidth / 2), y = player.y, img = bulletImg}
-    --     table.insert(bullets, newBullet)
-    --     canShoot = false
-    --     canShootTimer = canShootTimerMax
-    -- end
-    -- for i, bullet in ipairs(bullets) do
-    --     bullet.y = bullet.y - (250 * dt)
-
-    --     if bullet.y < 0 then
-    --         table.remove (bullets, i)
-    --     end
-    -- end
+    if love.keyboard.isDown('space', 'rctrl', 'lctrl') and player:canShoot(dt) then
+        newWaterJet = waterjet:new(player:getPlayerCenter(), 'up')
+        table.insert(jets.content, newWaterJet)
+    end
  end
 
 -- function love.keypressed(key)
@@ -141,29 +138,24 @@ function love.update(dt)
 -- end
 
 function love.draw(dt)
+    for i, jet in ipairs(jets.content) do
+        love.graphics.draw(jet.img, jet.x, jet.y, jet.rotation)
+    end
     love.graphics.setColor(16/255, 110/255, 232/255, 1)
     love.graphics.rectangle("fill", sea.x, sea.y, sea.xEnd - sea.x, sea.yEnd - sea.y)
     love.graphics.setColor(255, 255, 255, 1)
     love.graphics.draw(player.img, player.x, player.y)
-    for i, bullet in ipairs(bullets) do
-        love.graphics.draw(bullet.img, bullet.x, bullet.y)
-    end
 end
 
-function isIntersecting(obj1Start, obj1End, obj2Start, obj2End)
-    return (obj1Start > obj2Start and obj1Start < obj2End) or 
-        (obj1End > obj2Start and obj1End < obj2End)
-end
-
-function playerInWater(player, water)
-    return isIntersecting(player.x, player:getXEnd(), water.x, water.xEnd) and
-        isIntersecting(player.y, player:getYEnd(), water.y, water.yEnd)
-end
-
-
-function calculateAcceleration(currentVelocity, acceleration, dt)
+function calculateVelocity(currentVelocity, acceleration, dt)
     return currentVelocity + acceleration * dt
 end
 
-function calculateVeloctiy(currentVelocity, acceleration, dt)
+function calculatePosition(currentPosition, velocity, dt)
+    
+end
+
+function waterjet:isNotOnScreen()
+    return self.x < 0 or self.y < 0 
+        or self.x > screenWidth or self.y > screenHeight
 end
