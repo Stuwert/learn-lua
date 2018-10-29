@@ -15,6 +15,25 @@ player = {
     canShootTimer = 0,
 }
 
+local directionToRotation = {
+    up = {
+        xVelo    = 0,
+        yVelo    = 1,
+    },
+    down = {
+        xVelo    = 0,
+        yVelo    = - 1,
+    },
+    left = {
+        xVelo    = -1,
+        yVelo    = 0,
+    },
+    right = {
+        xVelo    = 1,
+        yVelo    = 0,
+    },
+}
+
 player.tank = player.tankMax
 
 function player:canShoot(dt)
