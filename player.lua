@@ -7,34 +7,55 @@ player = {
     refilRate = 1, 
     yEnd = nil, 
     xEnd = nil, 
-    playerAccel = 25, 
-    maxVelocity = 150,
     inWater = false,
     playerUnderwaterAccel = 15,
     canShootTimerMax = .2,
     canShootTimer = 0,
+    currentXVelo = 0,
+    currentYVelo = 0,
 }
+
+local maxVelocity = 150
 
 local directionToRotation = {
     up = {
-        xVelo    = 0,
-        yVelo    = 1,
-    },
-    down = {
-        xVelo    = 0,
-        yVelo    = - 1,
+        xAccel        = 0,
+        yAccel        = -200,
+        playerGravity = 100,
     },
     left = {
-        xVelo    = -1,
-        yVelo    = 0,
+        xAccel        = -100,
+        yAccel        = 0,
+        playerGravity = 0,
     },
     right = {
-        xVelo    = 1,
-        yVelo    = 0,
+        xAccel        = 100,
+        yAccel        = 0,
+        playerGravity = 0,
     },
+    none = {
+        xAccel        = 0,
+        yAccel        = 0,
+        playerGravity = 100,
+    }
+}
+
+player.currentAcceleration = directionToRotation.none
+
+local velocity = {
+    xAxis = 0,
+    yAxis = 0,
 }
 
 player.tank = player.tankMax
+
+local function calculateVelocity(currentVelocity, acceleration, dt)
+    return currentVelocity + acceleration * dt
+end
+
+local function calculatePosition(currentPosition, velocity, dt)
+    return currentPosition + velocity * dt
+end
 
 function player:canShoot(dt)
     self.canShootTimer = self.canShootTimer - dt
@@ -44,6 +65,48 @@ function player:canShoot(dt)
         return true
     end
     return false
+end
+
+function player:accelerate(direction)
+    print(direction)
+    self.currentAcceleration = directionToRotation[direction]
+    print(self.currentAcceleration.xAccel)
+    print(self.currentAcceleration.yAccel)
+    print(self.currentAcceleration.playerGravity)
+end
+
+function player:move(dt)
+    self.currentXVelo = calculateVelocity(
+        self.currentXVelo,
+        self.currentAcceleration.xAccel,
+        dt
+    )
+    print('x velo is')
+    print(self.currentXVelo)
+    self.currentYVelo = calculateVelocity(
+        self.currentYVelo,
+        self.currentAcceleration.yAccel,
+        dt
+    )
+    print('y velo is')
+    print(self.currentYVelo)
+    self.currentYVelo = calculateVelocity(
+        self.currentYVelo,
+        self.currentAcceleration.playerGravity,
+        dt
+    )
+    print('y velo is')
+    print(self.currentYVelo)
+    self.x = calculatePosition(
+        self.x,
+        self.currentXVelo,
+        dt
+    )
+    self.y = calculatePosition(
+        self.y,
+        self.currentYVelo,
+        dt
+    )
 end
 
 function player:getXEnd()

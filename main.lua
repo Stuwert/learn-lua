@@ -80,7 +80,7 @@ function love.update(dt)
 
     if love.keyboard.isDown('left', 'a') and player.tank > 0 then
         if player.x > 0 then
-            player.x = player.x - (player.speed*dt)
+            player:accelerate('left')            
             if player:collidedWith(sea) == false then
                 player.tank = player.tank - dt * 2
                 if player:canShoot(dt) then
@@ -92,7 +92,7 @@ function love.update(dt)
         end
     elseif love.keyboard.isDown('right', 'd') and player.tank > 0 then 
         if player.x < (screenWidth - player:getWidth()) then
-            player.x = player.x + (player.speed*dt)
+            player:accelerate('right') 
             if player:collidedWith(sea) == false then
                 player.tank = player.tank - dt * 2
                 if player:canShoot(dt) then
@@ -102,20 +102,21 @@ function love.update(dt)
             end
             player.velocity = 0
         end
-    end
-
-    if love.keyboard.isDown('up', 'w') and player.tank > 0 then
-        player.velocity = -1 * player.speed
+    elseif love.keyboard.isDown('up', 'w') and player.tank > 0 then
+        player:accelerate('up')
         if player:collidedWith(sea) == false then
-            player.tank = player.tank - dt * 2
             if player:canShoot(dt) then
                 newWaterJet = waterjet:new(player:getPlayerCenter(), 'down')
                 table.insert(jets.content, newWaterJet)
             end
         end
-    elseif love.keyboard.isDown('down', 's') and player:collidedWith(sea) then 
-        player.velocity = -1 * player.move_speed
+    else
+        if player:collidedWith(sea) == false then
+            player:accelerate('none')
+        end
     end
+
+    player:move(dt)
     
     if player.velocity ~= 0 then 
         player.y = player.y + player.velocity * dt
@@ -145,14 +146,6 @@ function love.draw(dt)
     love.graphics.rectangle("fill", sea.x, sea.y, sea.xEnd - sea.x, sea.yEnd - sea.y)
     love.graphics.setColor(255, 255, 255, 1)
     love.graphics.draw(player.img, player.x, player.y)
-end
-
-function calculateVelocity(currentVelocity, acceleration, dt)
-    return currentVelocity + acceleration * dt
-end
-
-function calculatePosition(currentPosition, velocity, dt)
-    
 end
 
 function waterjet:isNotOnScreen()
