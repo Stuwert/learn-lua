@@ -21,22 +21,18 @@ local directionToRotation = {
     up = {
         xAccel        = 0,
         yAccel        = -400,
-        playerGravity = 100,
     },
     left = {
         xAccel        = -400,
         yAccel        = 0,
-        playerGravity = 0,
     },
     right = {
         xAccel        = 400,
         yAccel        = 0,
-        playerGravity = 0,
     },
     none = {
         xAccel        = 0,
-        yAccel        = 0,
-        playerGravity = 400,
+        yAccel        = 200,
     }
 }
 
@@ -72,22 +68,14 @@ local function calculateVelocity(velocity, acceleration, dt)
     if acceleration == 0 or isChangingDirections(velocity, acceleration) then
         magnitude = math.abs(velocity)
         velocity =  currentDirection * math.max(magnitude * .99 - 10, 0);
-        print("new veloity is " .. velocity)
+        print("new velocity is " .. velocity)
     end
     velocity = velocity + acceleration * dt
     print(velocity)
     magnitude = math.min(math.abs(velocity), maxVelocity)
     print(magnitude)
     return magnitude * getDirection(velocity) -- <- it's multiplying by 0 here on stops
-    -- print(math.min(, maxVelocity) * getDirection(currentVelocity))
-    -- return currentVelocity + acceleration * dt
-    -- return math.min(math.abs(currentVelocity + acceleration * dt), maxVelocity) * getDirection(currentVelocity)
 end
-
---[[
-    f(v) = v / (1 + t) - 1
-    f(v) = v - v ^ t
-]]
 
 local function calculatePosition(currentPosition, velocity, dt)
     return currentPosition + velocity * dt
@@ -126,11 +114,6 @@ function player:move(dt)
         self.currentYVelo = calculateVelocity(
             self.currentYVelo,
             self.currentAcceleration.yAccel,
-            dt
-        )
-        self.currentYVelo = calculateVelocity(
-            self.currentYVelo,
-            self.currentAcceleration.playerGravity,
             dt
         )
     end
