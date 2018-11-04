@@ -30,11 +30,13 @@ function love.load(arg)
     love.window.setMode(800, 800)
     screenWidth = love.graphics.getWidth()
     screenHeight = love.graphics.getHeight()
-    player.img = love.graphics.newImage('aircrafts/Aircraft_03.png')
-    waterjet.img = love.graphics.newImage('aircrafts/bullet_2_blue.png')
+    player.img = love.graphics.newImage('octopus.png')
+    player.screenWidth = screenWidth
+    player.screenHeight = screenHeight
+    waterjet.img = love.graphics.newImage('waterdrop.png')
     player.velocity = 0
     player.gravity = 400
-    sea = { yEnd = screenHeight, xEnd = screenWidth, y = screenHeight - 200, x = 0, img = nil}
+    sea = { yEnd = screenHeight, xEnd = screenWidth, y = screenHeight - 400, x = 0, img = nil}
 end
 
 function refillTank()
@@ -47,23 +49,38 @@ function setWaterMoveSpeed()
 end
 
 function love.update(dt)
+    -- Things that need doing
+    --[[
+        Things that need doing:
+        - If there is still velocity elsewhere, don't apply acceleration
+    ]]--
+
+
     -- describe the loop
 
     -- set player in water
     -- refill tank/set water move speed
 
     -- check player inputs
-        -- if movement input, cancel gravity 
+        -- if movement input, cancel gravity
         -- apply accel
     -- calculate velocity
         -- apply velo max
     -- calculate position
         -- apply position maxes
-    -- calculate screen location 
+    -- calculate screen location
     -- apply new position
     -- animate ?
 
     -- player.velocity = 0
+
+    -- this feels like subscription is the correct methodology here
+    -- certain events (verbs) fire, and then other events listen to them.
+
+
+    -- Objects: gameSpace, player, waterJets, ocean
+    -- am I over-architecting this?  probably.
+
     jets:moveSpray(dt)
 
     player.velocity = player.gravity
@@ -80,7 +97,7 @@ function love.update(dt)
 
     if love.keyboard.isDown('left', 'a') and player.tank > 0 then
         if player.x > 0 then
-            player:accelerate('left')            
+            player:accelerate('left')
             if player:collidedWith(sea) == false then
                 player.tank = player.tank - dt * 2
                 if player:canShoot(dt) then
@@ -90,9 +107,9 @@ function love.update(dt)
             end
             player.velocity = 0
         end
-    elseif love.keyboard.isDown('right', 'd') and player.tank > 0 then 
+    elseif love.keyboard.isDown('right', 'd') and player.tank > 0 then
         if player.x < (screenWidth - player:getWidth()) then
-            player:accelerate('right') 
+            player:accelerate('right')
             if player:collidedWith(sea) == false then
                 player.tank = player.tank - dt * 2
                 if player:canShoot(dt) then
@@ -111,19 +128,19 @@ function love.update(dt)
             end
         end
     else
-        if player:collidedWith(sea) == false then
+        -- if player:collidedWith(sea) == false then
             player:accelerate('none')
-        end
+        -- end
     end
 
     player:move(dt)
-    
-    if player.velocity ~= 0 then 
+
+    if player.velocity ~= 0 then
         player.y = player.y + player.velocity * dt
-        -- player.velocity = player.velocity - player.gravity * dt 
+        -- player.velocity = player.velocity - player.gravity * dt
     end
 
-    if (player.y + player:getHeight()) >= screenHeight then 
+    if (player.y + player:getHeight()) >= screenHeight then
         -- player.velocity = 0
         player.y = screenHeight - player:getHeight()
     end
@@ -135,7 +152,7 @@ function love.update(dt)
  end
 
 -- function love.keypressed(key)
-    
+
 -- end
 
 function love.draw(dt)
@@ -149,6 +166,6 @@ function love.draw(dt)
 end
 
 function waterjet:isNotOnScreen()
-    return self.x < 0 or self.y < 0 
+    return self.x < 0 or self.y < 0
         or self.x > screenWidth or self.y > screenHeight
 end

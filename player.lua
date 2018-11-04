@@ -1,12 +1,12 @@
-player = { 
-    x = 200, 
-    y = 510, 
-    speed = 100, 
-    img = nil, 
-    tankMax = 10, 
-    refilRate = 1, 
-    yEnd = nil, 
-    xEnd = nil, 
+player = {
+    x = 200,
+    y = 510,
+    speed = 100,
+    img = nil,
+    tankMax = 10,
+    refilRate = 1,
+    yEnd = nil,
+    xEnd = nil,
     inWater = false,
     playerUnderwaterAccel = 15,
     canShootTimerMax = .2,
@@ -15,28 +15,28 @@ player = {
     currentYVelo = 0,
 }
 
-local maxVelocity = 150
+local maxVelocity = 400
 
 local directionToRotation = {
     up = {
         xAccel        = 0,
-        yAccel        = -200,
+        yAccel        = -400,
         playerGravity = 100,
     },
     left = {
-        xAccel        = -100,
+        xAccel        = -400,
         yAccel        = 0,
         playerGravity = 0,
     },
     right = {
-        xAccel        = 100,
+        xAccel        = 400,
         yAccel        = 0,
         playerGravity = 0,
     },
     none = {
         xAccel        = 0,
         yAccel        = 0,
-        playerGravity = 100,
+        playerGravity = 400,
     }
 }
 
@@ -49,9 +49,45 @@ local velocity = {
 
 player.tank = player.tankMax
 
-local function calculateVelocity(currentVelocity, acceleration, dt)
-    return currentVelocity + acceleration * dt
+local function getDirection(value)
+    if value == 0 then
+        return 0
+    end
+    return math.abs(value) / value
 end
+
+local function isChangingDirections(currentVelocity, acceleration)
+    return getDirection(currentVelocity) ~= getDirection(acceleration)
+end
+
+-- so the issue here
+
+local function calculateVelocity(velocity, acceleration, dt)
+    currentDirection = getDirection(velocity)
+    print("direction is " .. currentDirection)
+    -- if accel is 0 drop the velo to 0
+    print('-----')
+    print('velocity is ' .. velocity)
+    -- slow down the current velocity
+    if acceleration == 0 or isChangingDirections(velocity, acceleration) then
+        magnitude = math.abs(velocity)
+        velocity =  currentDirection * math.max(magnitude * .99 - 10, 0);
+        print("new veloity is " .. velocity)
+    end
+    velocity = velocity + acceleration * dt
+    print(velocity)
+    magnitude = math.min(math.abs(velocity), maxVelocity)
+    print(magnitude)
+    return magnitude * getDirection(velocity) -- <- it's multiplying by 0 here on stops
+    -- print(math.min(, maxVelocity) * getDirection(currentVelocity))
+    -- return currentVelocity + acceleration * dt
+    -- return math.min(math.abs(currentVelocity + acceleration * dt), maxVelocity) * getDirection(currentVelocity)
+end
+
+--[[
+    f(v) = v / (1 + t) - 1
+    f(v) = v - v ^ t
+]]
 
 local function calculatePosition(currentPosition, velocity, dt)
     return currentPosition + velocity * dt
@@ -76,27 +112,29 @@ function player:accelerate(direction)
 end
 
 function player:move(dt)
-    self.currentXVelo = calculateVelocity(
-        self.currentXVelo,
-        self.currentAcceleration.xAccel,
-        dt
-    )
-    print('x velo is')
-    print(self.currentXVelo)
-    self.currentYVelo = calculateVelocity(
-        self.currentYVelo,
-        self.currentAcceleration.yAccel,
-        dt
-    )
-    print('y velo is')
-    print(self.currentYVelo)
-    self.currentYVelo = calculateVelocity(
-        self.currentYVelo,
-        self.currentAcceleration.playerGravity,
-        dt
-    )
-    print('y velo is')
-    print(self.currentYVelo)
+    -- this might be where the mess is
+
+    if self.currentYVelo == 0 then
+        self.currentXVelo = calculateVelocity(
+            self.currentXVelo,
+            self.currentAcceleration.xAccel,
+            dt
+        )
+    end
+
+    if self.currentXVelo == 0 then
+        self.currentYVelo = calculateVelocity(
+            self.currentYVelo,
+            self.currentAcceleration.yAccel,
+            dt
+        )
+        self.currentYVelo = calculateVelocity(
+            self.currentYVelo,
+            self.currentAcceleration.playerGravity,
+            dt
+        )
+    end
+
     self.x = calculatePosition(
         self.x,
         self.currentXVelo,
@@ -150,7 +188,7 @@ function player:getHeight()
 end
 
 local function isIntersecting(obj1Start, obj1End, obj2Start, obj2End)
-    return (obj1Start > obj2Start and obj1Start < obj2End) or 
+    return (obj1Start > obj2Start and obj1Start < obj2End) or
         (obj1End > obj2Start and obj1End < obj2End)
 end
 

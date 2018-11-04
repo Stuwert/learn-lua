@@ -14,20 +14,20 @@ local directionToRotation = {
     left = {
         xVelo    = -1,
         yVelo    = 0,
-        rotation = math.pi * 3 / 2
+        rotation = math.pi / 2
     },
     right = {
         xVelo    = 1,
         yVelo    = 0,
-        rotation = math.pi / 2
+        rotation = math.pi * 3 / 2
     },
 }
 
 -- x velocity direction
--- y velocity direction 
--- rotation value 
+-- y velocity direction
+-- rotation value
 
--- if up 
+-- if up
 
 function waterjet:new(startingLocation, direction)
     rotationObj = directionToRotation[direction]
